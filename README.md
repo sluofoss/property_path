@@ -12,6 +12,14 @@
 - investment return compare to saving account at bank
 - expected return compare 
 
+
+# todo:
+- enable download of table with fixed name
+- modularize editable table callback set
+- enable adding rows to table in the UI
+- use editable table as input for price calculation
+- visualize and compare the growth rate of property
+
 # project initiation log
 
 ```

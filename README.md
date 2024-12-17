@@ -19,7 +19,6 @@
 - enable adding rows to table in the UI
 - use editable table as input for price calculation
 - visualize and compare the growth rate of property
-
 - host on https://render.com/pricing
     - mentioned here [plotly community](https://community.plotly.com/t/free-hosting-platforms-for-python-web-app/75850/2) as having free tier
 

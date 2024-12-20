@@ -27,7 +27,8 @@
     - mentioned here [plotly community](https://community.plotly.com/t/free-hosting-platforms-for-python-web-app/75850/2) as having free tier
 - [ ] host on single node ECS cluster 
     - https://docs.github.com/en/actions/use-cases-and-examples/deploying/deploying-to-amazon-elastic-container-service
-
+    - https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create_deploy_docker_ecs.html
+        - use elastic beanstalk to launch multi container environment without manually setting up ELB, security groups and others.   
 # project initiation log
 
 ```
@@ -38,3 +39,8 @@ uv run django-admin startproject property_path .
 uv run manage.py runserver
 ```
 
+# dev stage illustration
+
+![initial stage blank](docs/empty_demo.png)
+
+![initial stage basic plot and calc](docs/stage_0_progress.png)

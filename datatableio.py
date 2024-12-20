@@ -1,4 +1,4 @@
-from dash import Dash, Output, Input, State, html, dcc, callback, MATCH, dash_table
+from dash import Dash, Output, Input, State, html, dcc, callback, MATCH, dash_table, ctx
 import uuid
 
 import pandas as pd
@@ -114,8 +114,20 @@ class DataTableIO(html.Div):
                         ],
                         editable=True,
                         row_deletable=True,
-                        #export_format="csv",
-                        #export_headers="display",
+                        css=[{'selector': 'table', 'rule': 'table-layout: fixed'}],
+                        style_cell={ #fixes column width
+                            'width': '{}%'.format(int(100/len(columns))),
+                            'textOverflow': 'ellipsis',
+                            'overflow': 'hidden'
+                        },
+                        style_header = {
+                            'whiteSpace': 'normal',
+                            'height': 'auto',
+                        }, 
+                        style_data={ # allow line wrapping
+                            'whiteSpace': 'normal',
+                            'height': 'auto',
+                        },
                     ),
                     style={"display": "block"},
                 ),
@@ -124,38 +136,48 @@ class DataTableIO(html.Div):
             style = {"width": "40%", "display": "inline-block", "margin": "10px"}
         )
 
-    #@callback(
-    #    Output(ids.datatable(MATCH), 'data'),
-    #    Output(ids.datatable(MATCH), 'columns'),
-    #    Input(ids.upload(MATCH), 'contents'),
-    #    State(ids.upload(MATCH), 'filename'))
-    #def upload_file(contents, filename):
-    #    if contents is None:
-    #        return [{}], []
-    #    df = parse_contents(contents, filename)
-    #    return df.to_dict('records'), [{"name": i, "id": i} for i in df.columns]
-
-
-    #@callback(
-    #    Output(ids.download(MATCH), "data"),
-    #    Input(ids.download_button(MATCH), "n_clicks"),
-    #    State(ids.datatable(MATCH),"data"),
-    #    prevent_initial_call=True,
-    #)
-    #def download_file(n_clicks,data):
-    #    #return dcc.send_data_frame(df.to_csv, "mydf.csv")
-    #    return None
-    #
     @callback(
-        Output(ids.datatable(MATCH), "data"),
+        Output(ids.datatable(MATCH), 'data'),
+        Output(ids.datatable(MATCH), 'columns'),
+        Input(ids.upload(MATCH), 'contents'),
         Input(ids.addrow(MATCH), "n_clicks"),
+        State(ids.upload(MATCH), 'filename'),
         State(ids.datatable(MATCH), "data"),
-        State(ids.datatable(MATCH), "columns"),
+        State(ids.datatable(MATCH), 'columns'),
+        prevent_initial_call=True,
     )
+    def change_to_table(contents, n_clicks, filename, data, columns):
+        triggered_id = ctx.triggered_id
+        print(triggered_id)
+        if triggered_id['subcomponent'] == 'upload':
+            res = DataTableIO.upload_file(contents,filename,columns)
+        elif triggered_id['subcomponent'] == 'addrow':
+            res = DataTableIO.add_row(n_clicks,data,columns)
+        else:
+            print('not triggered')
+        return res
+
+    def upload_file(contents, filename, current_columns):
+        if contents is None:
+            return [{}], [{"name": i, "id": i} for i in current_columns]
+        df = parse_contents(contents, filename)
+        return df.to_dict('records'), [{"name": i, "id": i} for i in df.columns]
+
     def add_row(n_clicks, data, columns):
         if n_clicks > 0:
             data.append({c["id"]: "" for c in columns})
-        return data
+        return data, columns
+
+    @callback(
+        Output(ids.download(MATCH), "data"),
+        Input(ids.download_button(MATCH), "n_clicks"),
+        State(ids.datatable(MATCH),"data"),
+        State(ids.datatable(MATCH),"id"), # used to determine the output file name
+        prevent_initial_call=True,
+    )
+    def download_file(n_clicks,data, id):
+        print(pd.DataFrame(data).drop(columns=['Model']))
+        return dcc.send_data_frame(pd.DataFrame(data).drop(columns=['Model']).to_csv, id['aio_id']+".csv", index=False)
 
     # @callback()
     # def table_update():

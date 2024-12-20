@@ -23,6 +23,7 @@ prop_col = [
     "estimated partial rent (weekly)",
 ]
 prop_derived_col = [
+    "address",
     'stamp duty (upper)', 
     'stamp duty (lower)', 
     'after tax full rent (yearly)', 
@@ -55,17 +56,6 @@ app.layout = [
     html.Div(
         [
             DataTableIO(prop_col, 'property'),
-            html.Div(
-                dash_table.DataTable(
-                    id = 'property_derived', 
-                    columns=([{"id": c, "name": c} for c in prop_derived_col]),
-                    data=[
-                        dict(Model=i, **{param: None for param in prop_derived_col})
-                        for i in range(1, 5)
-                    ],
-                ),
-                style = {'display':'inline-flex', 'margin':'20px'},
-            ),
             DataTableIO(loan_col, 'loan'),
         ]
     ),
@@ -85,11 +75,18 @@ app.layout = [
     ),
     # dcc.Dropdown(df.country.unique(), 'Canada', id='dropdown-selection'),
     # 
-    dcc.Graph(id='graph-content1'),
-    dcc.Graph(id='graph-content2'),
-    dcc.Graph(id='graph-content3'),
-    dcc.Graph(id='graph-content'),
-
+    html.Div(
+        dash_table.DataTable(
+            id = 'property_derived', 
+            columns=([{"id": c, "name": c} for c in prop_derived_col]),
+            data=[
+                dict(Model=i, **{param: None for param in prop_derived_col})
+                for i in range(1, 5)
+            ],
+        ),
+        style = {'display':'flex', 'margin':'20px'},
+    ),
+    dcc.Graph(id='graph-content1')
 ]
 
 
@@ -112,6 +109,7 @@ def update_graph(n_clicks, property_data, loan_data, deposit):
     derived = []
     for rec in property_data:
         derived.append({
+            "address":rec["address"],
             'stamp duty (upper)':stamp_duty(int(rec['upper buy price'])),
             'stamp duty (lower)':stamp_duty(int(rec['lower buy price'])),
             'after tax full rent (yearly)': int(int(rec['estimated full rent (weekly)'])*40*0.8), 
@@ -134,9 +132,20 @@ def update_graph(n_clicks, property_data, loan_data, deposit):
             'yearly total spending (lower)': 4*(rec['water']+rec['council']+rec['strata'])+_lower*12
 
         })
+    ordered = sorted(derived, key= lambda r:r['yearly total spending (upper)']-r['after tax partial rent (yearly)'])
     #dff = df[df.country == value]
     #return px.line(dff, x="year", y="pop")
-    return px.line(), derived
+    return (
+        px.bar(
+            pd.DataFrame(ordered), 
+            x = 'address', 
+            y = ['yearly total spending (upper)','yearly total spending (lower)'],
+            barmode = 'overlay',
+            width = 1000,
+            height = 1000
+        ), 
+        ordered
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)

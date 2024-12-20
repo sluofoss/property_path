@@ -2,6 +2,7 @@ from dash import Dash, html, dcc, callback, Output, Input, State, dash_table
 from datatableio import DataTableIO
 import pandas as pd
 import plotly.express as px
+from finance_etc.mortgage import stamp_duty, buy_amortized, project_n_years_property_spend
 
 external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
 
@@ -26,10 +27,20 @@ prop_derived_col = [
     'stamp duty (lower)', 
     'after tax full rent (yearly)', 
     'after tax partial rent (yearly)',
+    'monthly mortgage (upper)',
+    'monthly mortgage (lower)',
+    'yearly total spending (upper)',
+    'yearly total spending (lower)',
     #'estimated cost', should combine loan into hence in different table
     # or should it be based on the loan with the smallest possible rate?
 ]
-loan_col = ["bank", "loan name", "rate", "repay interest only", "year period"]
+loan_col = [
+    #"bank", 
+    "loan name", 
+    "rate", 
+    #"repay interest only", 
+    #"year period"
+]
 
 app.layout = [
     html.H1(
@@ -87,13 +98,45 @@ app.layout = [
     Output('property_derived', 'data'),
     Input('calculate', 'n_clicks'),
     State(DataTableIO.ids.datatable('property'), 'data'),
+    State(DataTableIO.ids.datatable('loan'), 'data'),
+    State("input_deposit", 'value'),
     prevent_initial_call=True,
 )
-def update_graph(n_clicks, data):
-    print(pd.DataFrame(data))
+def update_graph(n_clicks, property_data, loan_data, deposit):
+    #print(pd.DataFrame(data))
+    loan_df = pd.DataFrame(loan_data)
+    loan_df['rate'] = loan_df['rate'].astype(float) 
+    if 'Model' in loan_df.columns:
+        loan_df = loan_df.drop(columns=['Model'])
+
+    derived = []
+    for rec in property_data:
+        derived.append({
+            'stamp duty (upper)':stamp_duty(int(rec['upper buy price'])),
+            'stamp duty (lower)':stamp_duty(int(rec['lower buy price'])),
+            'after tax full rent (yearly)': int(int(rec['estimated full rent (weekly)'])*40*0.8), 
+            'after tax partial rent (yearly)': int(int(rec['estimated partial rent (weekly)'])*40*0.8),
+            'monthly mortgage (upper)': (_upper:= buy_amortized(
+                loan_amount = int(rec['upper buy price'])-deposit, #TODO replace 
+                interest_rate = loan_df['rate'].min(), #TODO do group by loan type (is interest only), 
+                years= 30, #TODO allow customized year 
+                year_days = 365.25, 
+                repay_day_apart = 365.25/12
+            )),
+            'monthly mortgage (lower)': (_lower:= buy_amortized(
+                loan_amount = int(rec['lower buy price'])-deposit, #TODO replace 
+                interest_rate = loan_df['rate'].min(), #TODO do group by loan type (is interest only), 
+                years= 30, #TODO allow customized year
+                year_days = 365.25, 
+                repay_day_apart = 365.25/12
+            )),
+            'yearly total spending (upper)': 4*(rec['water']+rec['council']+rec['strata'])+_upper*12,
+            'yearly total spending (lower)': 4*(rec['water']+rec['council']+rec['strata'])+_lower*12
+
+        })
     #dff = df[df.country == value]
     #return px.line(dff, x="year", y="pop")
-    return px.line(), None
+    return px.line(), derived
 
 if __name__ == "__main__":
     app.run(debug=True)

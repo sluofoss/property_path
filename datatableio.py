@@ -110,7 +110,7 @@ class DataTableIO(html.Div):
                         columns=([{"id": c, "name": c} for c in columns]),
                         data=[
                             dict(Model=i, **{param: None for param in columns})
-                            for i in range(1, 5)
+                            for i in range(1, 2)
                         ],
                         editable=True,
                         row_deletable=True,
@@ -176,8 +176,11 @@ class DataTableIO(html.Div):
         prevent_initial_call=True,
     )
     def download_file(n_clicks,data, id):
-        print(pd.DataFrame(data).drop(columns=['Model']))
-        return dcc.send_data_frame(pd.DataFrame(data).drop(columns=['Model']).to_csv, id['aio_id']+".csv", index=False)
+
+        df = pd.DataFrame(data)
+        if 'Model' in df.columns:
+            df = df.drop(columns=['Model'])
+        return dcc.send_data_frame(df.to_csv, id['aio_id']+".csv", index=False)
 
     # @callback()
     # def table_update():

@@ -14,13 +14,19 @@
 
 
 # todo:
-- enable download of table with fixed name
-- modularize editable table callback set
-- enable adding rows to table in the UI
-- use editable table as input for price calculation
-- visualize and compare the growth rate of property
-- host on https://render.com/pricing
+- [x] enable download of table with fixed name
+- [x] modularize editable table callback set
+- [x] enable adding rows to table in the UI
+- [x] use editable table as input for price calculation
+- [ ] visualize and compare the growth rate of property
+- [ ] hide input section
+- [ ] allow cross filtering of some sort of graphs?
+- [ ] create tabs for different menus
+- [ ] create drop down of specific property and check the change of cost by different variables. 
+- [ ] host on https://render.com/pricing
     - mentioned here [plotly community](https://community.plotly.com/t/free-hosting-platforms-for-python-web-app/75850/2) as having free tier
+- [ ] host on single node ECS cluster 
+    - https://docs.github.com/en/actions/use-cases-and-examples/deploying/deploying-to-amazon-elastic-container-service
 
 # project initiation log
 
